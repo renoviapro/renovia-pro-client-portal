@@ -96,9 +96,10 @@ async def verify_token(request: Request):
     if not user_id:
         user_doc = await db.client_users.find_one({"email": email})
         user_id = str(user_doc["_id"])
+    is_new = not user or not user.get("name")
     access = create_access_token(user_id)
     refresh = create_refresh_token(user_id)
-    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
+    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer", "is_new_user": is_new}
 
 @router.post("/refresh")
 async def refresh_tokens(body: RefreshRequest):

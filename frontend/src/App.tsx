@@ -3,6 +3,7 @@ import { getToken } from "./lib/api";
 import Login from "./pages/Login";
 import AuthCallback from "./pages/AuthCallback";
 import ResetPassword from "./pages/ResetPassword";
+import Welcome from "./pages/Welcome";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Chantiers from "./pages/Chantiers";
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/welcome" element={<Welcome />} />
       <Route path="/" element={<Protected><Layout /></Protected>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
