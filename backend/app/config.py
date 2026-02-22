@@ -27,6 +27,16 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "5"))
 MAX_TICKET_FILES = int(os.getenv("MAX_TICKET_FILES", "8"))
 
+# ── Connexions inter-services ──────────────────────────────────────────────
+# renovia-pro-compta (chantiers, documents client)
+COMPTA_URL = os.getenv("COMPTA_URL", "https://app.renoviapro.fr")
+COMPTA_JWT_SECRET = os.getenv("COMPTA_JWT_SECRET", "")
+COMPTA_JWT_ALGORITHM = "HS256"
+
+# renovia-devis-en-ligne (devis & demandes client)
+DEVIS_URL = os.getenv("DEVIS_URL", "http://host.docker.internal:8010")
+# ────────────────────────────────────────────────────────────────────────────
+
 # SMTP (emails magic link) — même schéma que le site principal (backend)
 SMTP_HOST = os.getenv("SMTP_HOST", "ssl0.ovh.net")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

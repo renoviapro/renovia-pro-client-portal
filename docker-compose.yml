@@ -10,6 +10,8 @@ services:
     volumes: ["./uploads:/app/uploads"]
     depends_on: [mongo]
     networks: [default, web]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   mongo:
     image: mongo:7
     volumes: [mongo_data:/data/db]
