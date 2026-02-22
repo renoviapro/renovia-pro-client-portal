@@ -9,15 +9,40 @@ const typeConfig: Record<string, { icon: string; color: string }> = {
   attestation: { icon: "📄", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
 };
 
-export default function Documents() {
-  const [items, setItems] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
+const CACHE_KEY = "docs_cache";
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  useEffect(() => {
+function readCache(): Doc[] | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
+    return data;
+  } catch { return null; }
+}
+
+function writeCache(data: Doc[]) {
+  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
+
+export default function Documents() {
+  const [items, setItems] = useState<Doc[]>(() => readCache() ?? []);
+  const [loading, setLoading] = useState(!readCache());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchDocs = (force = false) => {
+    if (!force) {
+      const cached = readCache();
+      if (cached) { setItems(cached); setLoading(false); return; }
+    }
+    setRefreshing(true);
     api<{ items: Doc[] }>("/api/v1/documents")
-      .then(r => setItems(r.items))
-      .finally(() => setLoading(false));
-  }, []);
+      .then(r => { setItems(r.items); writeCache(r.items); })
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  };
+
+  useEffect(() => { fetchDocs(); }, []);
 
   const openDocument = async (doc: Doc) => {
     if (!doc.url) return;
@@ -33,9 +58,24 @@ export default function Documents() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white">Documents</h2>
-        <p className="text-white/40 text-sm mt-1">Vos devis, factures et attestations téléchargeables.</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-white">Documents</h2>
+          <p className="text-white/40 text-sm mt-1">Vos devis, factures et attestations téléchargeables.</p>
+        </div>
+        <button
+          onClick={() => fetchDocs(true)}
+          disabled={refreshing}
+          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors disabled:opacity-40"
+          title="Actualiser"
+        >
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+            className={refreshing ? "animate-spin" : ""}>
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          {refreshing ? "Chargement…" : "Actualiser"}
+        </button>
       </div>
 
       {loading && (
