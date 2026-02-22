@@ -79,6 +79,71 @@ def _magic_link_html(link: str) -> str:
 </html>"""
 
 
+def send_welcome_email(to: str, link: str) -> bool:
+    """Email de bienvenue pour un nouveau compte — lien magique inclus."""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print("[EMAIL] SMTP non configuré, skip welcome")
+        return False
+    html = f"""<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0; padding:0; background:#f9f9f9; font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9; padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr><td>{EMAIL_HEADER}</td></tr>
+        <tr>
+          <td style="padding:36px 32px;">
+            <h2 style="margin:0 0 8px; font-size:24px; color:#111;">Bienvenue chez Renovia Pro !</h2>
+            <p style="margin:0 0 8px; font-size:14px; color:#FEBD17; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Votre espace client vient d'être créé</p>
+            <p style="margin:0 0 28px; font-size:15px; color:#555; line-height:1.7;">
+              Bonjour,<br/><br/>
+              Nous avons créé votre espace client Renovia Pro avec l'adresse <strong style="color:#111;">{to}</strong>.<br/>
+              Cliquez sur le bouton ci-dessous pour accéder à votre espace et compléter votre profil.<br/>
+              Ce lien est <strong style="color:#000;">valable 15 minutes</strong>.
+            </p>
+            <div style="margin:0 0 28px; text-align:center;">
+              <a href="{link}" style="display:inline-block; background:{GOLD}; color:#000; padding:16px 44px; border-radius:40px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:0.5px;">
+                Accéder à mon espace client
+              </a>
+            </div>
+            <div style="padding:16px; background:#f9f9f9; border-left:4px solid {GOLD}; border-radius:4px; margin-bottom:16px;">
+              <p style="margin:0 0 6px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:1px;">Lien de secours</p>
+              <a href="{link}" style="font-size:12px; color:{GOLD}; word-break:break-all;">{link}</a>
+            </div>
+            <p style="margin:0; font-size:12px; color:#aaa; line-height:1.6;">
+              Si vous n'avez pas demandé la création de ce compte, ignorez cet email.
+            </p>
+          </td>
+        </tr>
+        <tr><td>{EMAIL_FOOTER}</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+    msg = MIMEText(html, "html", "utf-8")
+    msg["Subject"] = "Bienvenue dans votre espace client – Renovia Pro"
+    msg["From"] = SMTP_FROM or "noreply@renoviapro.fr"
+    msg["To"] = to
+    try:
+        port = int(SMTP_PORT)
+        print(f"[EMAIL] Envoi welcome à {to}")
+        if port == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, port, timeout=15) as s:
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        else:
+            with smtplib.SMTP(SMTP_HOST, port, timeout=15) as s:
+                s.starttls()
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        print(f"[EMAIL] OK welcome envoyé à {to}")
+        return True
+    except Exception as e:
+        print(f"[EMAIL] ERREUR: {e}")
+        return False
+
+
 def send_reset_password_email(to: str, link: str) -> bool:
     if not SMTP_USER or not SMTP_PASSWORD:
         print("[EMAIL] SMTP non configuré, skip reset password")

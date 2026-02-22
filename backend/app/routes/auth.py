@@ -18,7 +18,7 @@ from app.services.auth_service import (
     verify_password,
 )
 from app.services.rate_limit import is_allowed
-from app.services.email_service import send_magic_link_email, send_reset_password_email
+from app.services.email_service import send_magic_link_email, send_reset_password_email, send_welcome_email
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -52,7 +52,8 @@ async def post_magic_link(req: MagicLinkRequest, request: Request):
     email = req.email.strip().lower()
     db = get_db()
     user = await db.client_users.find_one({"email": email})
-    if not user:
+    is_new = not user
+    if is_new:
         await db.client_users.insert_one({
             "email": email,
             "name": None,
@@ -69,7 +70,10 @@ async def post_magic_link(req: MagicLinkRequest, request: Request):
         "ua": request.headers.get("user-agent", ""),
     })
     link = magic_link_url(token)
-    send_magic_link_email(email, link)
+    if is_new:
+        send_welcome_email(email, link)
+    else:
+        send_magic_link_email(email, link)
     return {"ok": True, "message": "Si ce compte existe, un lien a été envoyé par email."}
 
 @router.post("/verify")
