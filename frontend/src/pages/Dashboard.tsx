@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function Dashboard() {
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-white">Tableau de bord</h1>
+      <h1 className="text-2xl font-semibold text-white" style={{ fontFamily: "'Black Ops One', sans-serif" }}>Tableau de bord</h1>
       <p className="mt-2 text-white/60 text-sm">Chantiers récents, documents, actions rapides.</p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link to="/tickets/new" className="block rounded-xl border border-white/20 bg-white/5 p-6 no-underline transition-colors hover:border-[#FEBD17]/50 hover:bg-white/[0.07]">

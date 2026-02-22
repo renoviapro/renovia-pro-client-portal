@@ -126,7 +126,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-6 bg-[#0d0d0d]">
       <div className="w-full max-w-md">
         <img src="/logo.png" alt="Renovia Pro" className="h-14 w-auto mx-auto mb-6 object-contain" />
-        <h1 className="text-2xl font-semibold text-white text-center">Espace client Renovia Pro</h1>
+        <h1 className="text-2xl font-semibold text-white text-center" style={{ fontFamily: "'Black Ops One', sans-serif" }}>Espace client Renovia Pro</h1>
 
         {mode === "set-password" ? (
           <>
