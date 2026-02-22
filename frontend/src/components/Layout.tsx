@@ -20,7 +20,7 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col md:flex-row bg-[#0d0d0d]">
       <aside className="w-full md:w-56 border-b md:border-b-0 md:border-r border-white/10 bg-black/50 p-5">
         <a href="/dashboard" className="block mb-6">
-          <img src="/logo.png" alt="Renovia Pro" className="h-12 w-auto object-contain" />
+          <img src="/logo.png" alt="Renovia Pro" className="h-[80px] w-auto object-contain" />
         </a>
         <nav className="flex flex-wrap gap-2 md:flex-col md:gap-0">
           {links.map((l) => (

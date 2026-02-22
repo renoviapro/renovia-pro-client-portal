@@ -103,7 +103,7 @@ export default function Login() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 bg-[#0d0d0d]">
         <div className="max-w-md w-full text-center">
-          <img src="/logo.png" alt="Renovia Pro" className="h-14 mx-auto mb-6 object-contain" />
+          <img src="/logo.png" alt="Renovia Pro" className="h-[100px] w-auto mx-auto mb-6 object-contain" />
           <h2 className="text-xl font-semibold text-white">Vérifiez votre boîte mail</h2>
           <p className="mt-3 text-white/70">
             Si un compte existe, vous recevrez un lien de connexion (valable 15 min).
