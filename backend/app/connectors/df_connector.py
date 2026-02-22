@@ -58,8 +58,12 @@ async def _get_df_client_id(email: str) -> str | None:
     return None
 
 
+# Statuts visibles par le client (documents envoyés/finalisés uniquement)
+_CLIENT_VISIBLE_STATUSES = {"sent", "accepted", "refused", "paid", "invoiced", "partially_paid"}
+
+
 async def get_documents_for_client(email: str) -> list[dict[str, Any]]:
-    """Retourne les devis et factures DF du client."""
+    """Retourne les devis et factures DF envoyés au client (pas les brouillons ni supprimés)."""
     client_id = await _get_df_client_id(email)
     if not client_id:
         log.info("[df] client introuvable pour email=%s", email)
@@ -71,6 +75,13 @@ async def get_documents_for_client(email: str) -> list[dict[str, Any]]:
 
     result = []
     for d in (data if isinstance(data, list) else []):
+        # Exclure brouillons, annulés et documents archivés/supprimés
+        status_raw = (d.get("status") or "").lower()
+        if status_raw not in _CLIENT_VISIBLE_STATUSES:
+            continue
+        if d.get("archived_at") or d.get("deleted_at"):
+            continue
+
         doc_id = d.get("id", "")
         doc_type = _doc_type(d.get("doc_type", ""))
         label = d.get("title") or d.get("doc_number") or "Document"
@@ -81,11 +92,28 @@ async def get_documents_for_client(email: str) -> list[dict[str, Any]]:
             "type": doc_type,
             "label": label.strip(" –"),
             "date": str(d.get("created_at", d.get("date", "")))[:10],
-            "status": _doc_status(d.get("status", "")),
-            "url": f"{DF_URL.rstrip('/')}/api/documents/{doc_id}/preview-html" if doc_id else "",
+            "status": _doc_status(status_raw),
+            "url": f"/api/v1/documents/{doc_id}/view",  # route proxy du portail client
             "source": "df",
         })
     return result
+
+
+async def fetch_document_html(doc_id: str) -> str | None:
+    """Récupère le HTML de prévisualisation d'un document DF (pour le proxy)."""
+    if not DF_JWT_SECRET or not DF_ADMIN_USER_ID:
+        return None
+    url = f"{DF_URL.rstrip('/')}/api/documents/{doc_id}/preview-html"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(url, headers=_headers())
+        if r.status_code == 200:
+            return r.text
+        log.warning("[df] preview %s → %s", doc_id, r.status_code)
+        return None
+    except Exception as exc:
+        log.error("[df] preview erreur : %s", exc)
+        return None
 
 
 def _doc_type(t: str) -> str:

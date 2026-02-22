@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api, getToken } from "../lib/api";
 
-type Doc = { id: string; type: string; label: string; date: string; url?: string };
+type Doc = { id: string; type: string; label: string; date: string; url?: string; status?: string; source?: string };
 
 const typeConfig: Record<string, { icon: string; color: string }> = {
   devis: { icon: "📋", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -18,6 +18,18 @@ export default function Documents() {
       .then(r => setItems(r.items))
       .finally(() => setLoading(false));
   }, []);
+
+  const openDocument = async (doc: Doc) => {
+    if (!doc.url) return;
+    // Appel proxy avec le JWT du portail → récupère HTML de DF
+    const res = await fetch(doc.url, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) { alert("Document introuvable."); return; }
+    const html = await res.text();
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+  };
 
   return (
     <div className="space-y-6">
@@ -61,23 +73,25 @@ export default function Documents() {
                 <span className={`text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${cfg.color}`}>
                   {d.type}
                 </span>
+                {d.status && (
+                  <span className="text-xs text-white/30 shrink-0 hidden sm:block">{d.status}</span>
+                )}
                 {d.url ? (
-                  <a
-                    href={d.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => openDocument(d)}
                     className="w-9 h-9 rounded-xl bg-[#FEBD17]/10 hover:bg-[#FEBD17]/20 flex items-center justify-center transition-colors shrink-0"
+                    title="Voir le document"
                   >
                     <svg width="16" height="16" fill="none" stroke="#FEBD17" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
                     </svg>
-                  </a>
+                  </button>
                 ) : (
                   <div className="w-9 h-9 rounded-xl bg-white/3 flex items-center justify-center shrink-0">
                     <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
                     </svg>
                   </div>
                 )}
