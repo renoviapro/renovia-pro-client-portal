@@ -79,6 +79,68 @@ def _magic_link_html(link: str) -> str:
 </html>"""
 
 
+def send_reset_password_email(to: str, link: str) -> bool:
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print("[EMAIL] SMTP non configuré, skip reset password")
+        return False
+    html = f"""<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0; padding:0; background:#f9f9f9; font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9; padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:560px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+        <tr><td>{EMAIL_HEADER}</td></tr>
+        <tr>
+          <td style="padding:36px 32px;">
+            <h2 style="margin:0 0 16px; font-size:22px; color:#111;">Réinitialisation de votre mot de passe</h2>
+            <p style="margin:0 0 12px; font-size:15px; color:#555; line-height:1.7;">Bonjour,</p>
+            <p style="margin:0 0 28px; font-size:15px; color:#555; line-height:1.7;">
+              Vous avez demandé à réinitialiser votre mot de passe.<br/>
+              Cliquez sur le bouton ci-dessous — ce lien est <strong style="color:#000;">valable 15 minutes</strong>.
+            </p>
+            <div style="margin:0 0 28px; text-align:center;">
+              <a href="{link}" style="display:inline-block; background:{GOLD}; color:#000; padding:14px 40px; border-radius:40px; text-decoration:none; font-weight:700; font-size:16px; letter-spacing:0.5px;">
+                Réinitialiser mon mot de passe
+              </a>
+            </div>
+            <div style="padding:16px; background:#f9f9f9; border-left:4px solid {GOLD}; border-radius:4px; margin-bottom:16px;">
+              <p style="margin:0 0 6px; font-size:11px; color:#999; text-transform:uppercase; letter-spacing:1px;">Lien de secours</p>
+              <a href="{link}" style="font-size:12px; color:{GOLD}; word-break:break-all;">{link}</a>
+            </div>
+            <p style="margin:0; font-size:12px; color:#aaa; line-height:1.6;">
+              Si vous n'avez pas demandé cette réinitialisation, ignorez cet email. Votre mot de passe reste inchangé.
+            </p>
+          </td>
+        </tr>
+        <tr><td>{EMAIL_FOOTER}</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+    msg = MIMEText(html, "html", "utf-8")
+    msg["Subject"] = "Réinitialisation de votre mot de passe – Renovia Pro"
+    msg["From"] = SMTP_FROM or "noreply@renoviapro.fr"
+    msg["To"] = to
+    try:
+        port = int(SMTP_PORT)
+        print(f"[EMAIL] Envoi reset password à {to}")
+        if port == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, port, timeout=15) as s:
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        else:
+            with smtplib.SMTP(SMTP_HOST, port, timeout=15) as s:
+                s.starttls()
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        print(f"[EMAIL] OK reset password envoyé à {to}")
+        return True
+    except Exception as e:
+        print(f"[EMAIL] ERREUR: {e}")
+        return False
+
+
 def send_magic_link_email(to: str, link: str) -> bool:
     if not SMTP_USER or not SMTP_PASSWORD:
         print("[EMAIL] SMTP non configuré (SMTP_USER/SMTP_PASSWORD ou SMTP_PASS), skip magic link")

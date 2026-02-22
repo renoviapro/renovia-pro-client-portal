@@ -18,7 +18,7 @@ from app.services.auth_service import (
     verify_password,
 )
 from app.services.rate_limit import is_allowed
-from app.services.email_service import send_magic_link_email
+from app.services.email_service import send_magic_link_email, send_reset_password_email
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -34,6 +34,13 @@ class LoginRequest(BaseModel):
 
 class SetPasswordRequest(BaseModel):
     email: EmailStr
+    password: str = Field(..., min_length=8)
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
     password: str = Field(..., min_length=8)
 
 @router.post("/magic-link")
@@ -153,3 +160,39 @@ async def set_password(body: SetPasswordRequest, request: Request):
     access = create_access_token(user_id)
     refresh = create_refresh_token(user_id)
     return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
+
+@router.post("/forgot-password")
+async def forgot_password(body: ForgotPasswordRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    if not is_allowed(f"forgot:{ip}", 3600, 5):
+        raise HTTPException(status_code=429, detail="Trop de demandes. Réessayez plus tard.")
+    email = body.email.strip().lower()
+    db = get_db()
+    user = await db.client_users.find_one({"email": email})
+    if user:
+        from app.config import BASE_URL_CLIENT
+        token = create_magic_token()
+        await db.magic_tokens.insert_one({
+            "token": token, "email": email, "type": "reset",
+            "expires_at": magic_link_expires_at(), "used_at": None, "ip": ip,
+        })
+        reset_link = f"{BASE_URL_CLIENT.rstrip('/')}/reset-password?token={token}"
+        send_reset_password_email(email, reset_link)
+    return {"ok": True, "message": "Si ce compte existe, un email a été envoyé."}
+
+@router.post("/reset-password")
+async def reset_password_route(body: ResetPasswordRequest, request: Request):
+    db = get_db()
+    row = await db.magic_tokens.find_one({"token": body.token, "type": "reset"})
+    if not row or row.get("used_at"):
+        raise HTTPException(status_code=400, detail="Lien invalide ou déjà utilisé.")
+    if datetime.utcnow() > row["expires_at"]:
+        raise HTTPException(status_code=400, detail="Lien expiré.")
+    email = row["email"]
+    await db.magic_tokens.update_one({"token": body.token}, {"$set": {"used_at": datetime.utcnow()}})
+    await db.client_users.update_one(
+        {"email": email}, {"$set": {"password_hash": hash_password(body.password)}}, upsert=True,
+    )
+    user = await db.client_users.find_one({"email": email})
+    uid = str(user["_id"])
+    return {"access_token": create_access_token(uid), "refresh_token": create_refresh_token(uid), "token_type": "bearer"}

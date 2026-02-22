@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const API = (import.meta as unknown as { env: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
 
-type Mode = "magic" | "password" | "set-password";
+type Mode = "magic" | "password" | "set-password" | "forgot";
 
 export default function Login() {
   const [mode, setMode] = useState<Mode>("magic");
@@ -58,6 +58,23 @@ export default function Login() {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await fetch(`${API}/api/v1/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      setSent(true);
+    } catch {
+      setSent(true);
+    }
+    setLoading(false);
+  };
+
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -98,28 +115,30 @@ export default function Login() {
     "w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-white/40 focus:border-[#FEBD17] focus:outline-none focus:ring-1 focus:ring-[#FEBD17]";
   const btnClass = "btn-gold w-full";
 
-  if (sent && mode === "magic") {
+  if (sent && (mode === "magic" || mode === "forgot")) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 bg-[#0d0d0d]">
         <div className="max-w-md w-full text-center">
           <img src="/logo.png" alt="Renovia Pro" className="h-[100px] w-auto mx-auto mb-6 object-contain" />
-          <h2 className="text-xl font-semibold text-white">Vérifiez votre boîte mail</h2>
+          <h2 className="text-xl font-semibold text-white">
+            {mode === "forgot" ? "Email envoyé !" : "Vérifiez votre boîte mail"}
+          </h2>
           <p className="mt-3 text-white/70">
-            Si un compte existe, vous recevrez un lien de connexion (valable 15 min).
+            {mode === "forgot"
+              ? "Si ce compte existe, vous recevrez un lien de réinitialisation (valable 15 min)."
+              : "Si un compte existe, vous recevrez un lien de connexion (valable 15 min)."}
           </p>
           <button
-            onClick={() => {
-              setSent(false);
-              setEmail("");
-            }}
+            onClick={() => { setSent(false); setEmail(""); setMode("password"); }}
             className="mt-6 text-[#FEBD17] hover:underline"
           >
-            Utiliser une autre adresse
+            Retour à la connexion
           </button>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 bg-[#0d0d0d]">
@@ -224,6 +243,40 @@ export default function Login() {
                 <button type="submit" disabled={loading} className={btnClass}>
                   {loading ? "Connexion..." : "Se connecter"}
                 </button>
+                <p className="text-center text-sm text-white/50">
+                  <button
+                    type="button"
+                    onClick={() => { setMode("forgot"); setError(""); setSent(false); }}
+                    className="text-[#FEBD17] hover:underline"
+                  >
+                    Mot de passe oublié ?
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {mode === "forgot" && (
+              <form onSubmit={handleForgotPassword} className="mt-6 flex flex-col gap-4">
+                <p className="text-white/60 text-sm text-center">
+                  Entrez votre email — nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                </p>
+                <input
+                  type="email"
+                  required
+                  placeholder="votre@email.fr"
+                  className={inputClass}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                {error && <p className="text-red-400 text-sm">{error}</p>}
+                <button type="submit" disabled={loading} className={btnClass}>
+                  {loading ? "Envoi..." : "Recevoir le lien de réinitialisation"}
+                </button>
+                <p className="text-center text-sm text-white/50">
+                  <button type="button" onClick={() => setMode("password")} className="text-[#FEBD17] hover:underline">
+                    Retour à la connexion
+                  </button>
+                </p>
               </form>
             )}
 
