@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { api, getToken } from "../lib/api";
 
-type Doc = { id: string; type: string; label: string; date: string; url?: string; status?: string; source?: string };
+type Doc = {
+  id: string; type: string; label: string; date: string;
+  url?: string; status?: string; source?: string;
+  actions?: string[]; total_ttc?: number;
+};
+
+type SignModalState = { doc: Doc; name: string; loading: boolean; done: boolean } | null;
 
 const typeConfig: Record<string, { icon: string; color: string }> = {
   devis: { icon: "📋", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -30,6 +36,8 @@ export default function Documents() {
   const [items, setItems] = useState<Doc[]>(() => readCache() ?? []);
   const [loading, setLoading] = useState(!readCache());
   const [refreshing, setRefreshing] = useState(false);
+  const [signModal, setSignModal] = useState<SignModalState>(null);
+  const [paying, setPaying] = useState<string | null>(null);
 
   const fetchDocs = (force = false) => {
     if (!force) {
@@ -43,6 +51,43 @@ export default function Documents() {
   };
 
   useEffect(() => { fetchDocs(); }, []);
+
+  const handleSign = async () => {
+    if (!signModal) return;
+    setSignModal(s => s ? { ...s, loading: true } : null);
+    try {
+      const r = await fetch(`/api/v1/documents/${signModal.doc.id}/sign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({ signer_name: signModal.name }),
+      });
+      if (r.ok) {
+        setSignModal(s => s ? { ...s, loading: false, done: true } : null);
+        sessionStorage.removeItem(CACHE_KEY);
+        setTimeout(() => { setSignModal(null); fetchDocs(true); }, 2000);
+      } else {
+        const err = await r.json().catch(() => ({}));
+        alert(err.detail || "Erreur lors de la signature.");
+        setSignModal(s => s ? { ...s, loading: false } : null);
+      }
+    } catch { setSignModal(s => s ? { ...s, loading: false } : null); }
+  };
+
+  const handlePay = async (doc: Doc) => {
+    setPaying(doc.id);
+    try {
+      const r = await fetch(`/api/v1/documents/${doc.id}/pay`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (r.ok) {
+        const { checkout_url } = await r.json();
+        window.location.href = checkout_url;
+      } else {
+        const err = await r.json().catch(() => ({}));
+        alert(err.detail || "Impossible de créer le lien de paiement.");
+      }
+    } finally { setPaying(null); }
+  };
 
   const openDocument = async (doc: Doc) => {
     if (!doc.url) return;
@@ -58,6 +103,51 @@ export default function Documents() {
 
   return (
     <div className="space-y-6">
+      {/* Modale de signature */}
+      {signModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            {signModal.done ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                  <svg width="28" height="28" fill="none" stroke="#22c55e" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <p className="text-white font-semibold text-lg">Devis signé !</p>
+                <p className="text-white/40 text-sm mt-1">Vous recevrez une confirmation par email.</p>
+              </div>
+            ) : (
+              <>
+                <h3 className="text-white font-bold text-lg mb-1">Signer le devis</h3>
+                <p className="text-white/40 text-sm mb-5 truncate">{signModal.doc.label}</p>
+                <label className="block text-white/60 text-xs mb-2 uppercase tracking-wider">Votre nom complet</label>
+                <input
+                  type="text"
+                  value={signModal.name}
+                  onChange={e => setSignModal(s => s ? { ...s, name: e.target.value } : null)}
+                  placeholder="Prénom Nom"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#FEBD17]/50 mb-4"
+                />
+                <p className="text-white/30 text-xs mb-6">
+                  En signant, vous acceptez les conditions du devis. Cette action est définitive.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSignModal(null)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm hover:text-white/80 transition-colors"
+                  >Annuler</button>
+                  <button
+                    onClick={handleSign}
+                    disabled={!signModal.name.trim() || signModal.loading}
+                    className="flex-1 py-3 rounded-xl bg-[#FEBD17] text-black font-bold text-sm hover:bg-[#ffd04d] transition-colors disabled:opacity-40"
+                  >
+                    {signModal.loading ? "Signature…" : "Je signe"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white">Documents</h2>
@@ -115,6 +205,31 @@ export default function Documents() {
                 </span>
                 {d.status && (
                   <span className="text-xs text-white/30 shrink-0 hidden sm:block">{d.status}</span>
+                )}
+                {/* Bouton Signer (devis envoyé) */}
+                {d.actions?.includes("sign") && (
+                  <button
+                    onClick={() => setSignModal({ doc: d, name: "", loading: false, done: false })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEBD17] text-black text-xs font-bold hover:bg-[#ffd04d] transition-colors shrink-0"
+                  >
+                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                    </svg>
+                    Signer
+                  </button>
+                )}
+                {/* Bouton Payer (facture impayée) */}
+                {d.actions?.includes("pay") && (
+                  <button
+                    onClick={() => handlePay(d)}
+                    disabled={paying === d.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors shrink-0 disabled:opacity-40"
+                  >
+                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    {paying === d.id ? "…" : "Payer"}
+                  </button>
                 )}
                 {d.url ? (
                   <button

@@ -31,6 +31,22 @@ def _headers() -> dict:
     return {"Authorization": f"Bearer {_df_token()}"}
 
 
+async def _post(path: str, body: dict | None = None) -> Any:
+    if not DF_JWT_SECRET or not DF_ADMIN_USER_ID:
+        return None
+    url = f"{DF_URL.rstrip('/')}{path}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(url, headers=_headers(), json=body or {})
+        if r.status_code in (200, 201):
+            return r.json()
+        log.warning("[df] POST %s → %s : %s", url, r.status_code, r.text[:200])
+        return {"error": r.text[:200], "status_code": r.status_code}
+    except Exception as exc:
+        log.error("[df] POST erreur : %s", exc)
+        return {"error": str(exc)}
+
+
 async def _get(path: str, params: dict | None = None) -> Any:
     if not DF_JWT_SECRET or not DF_ADMIN_USER_ID:
         return None
@@ -83,20 +99,61 @@ async def get_documents_for_client(email: str) -> list[dict[str, Any]]:
             continue
 
         doc_id = d.get("id", "")
-        doc_type = _doc_type(d.get("doc_type", ""))
+        raw_doc_type = (d.get("doc_type") or "").lower()
+        doc_type = _doc_type(raw_doc_type)
         label = d.get("title") or d.get("doc_number") or "Document"
         if d.get("doc_number"):
             label = f"{d['doc_number']} – {d.get('title', '')}" if d.get("title") else d["doc_number"]
+
+        # Actions disponibles selon le type et le statut
+        actions: list[str] = []
+        if doc_type == "devis" and status_raw == "sent":
+            actions.append("sign")
+        if doc_type == "facture" and status_raw in ("sent", "invoiced", "partially_paid"):
+            actions.append("pay")
+
         result.append({
             "id": doc_id,
             "type": doc_type,
             "label": label.strip(" –"),
             "date": str(d.get("created_at", d.get("date", "")))[:10],
             "status": _doc_status(status_raw),
-            "url": f"/api/v1/documents/{doc_id}/view",  # route proxy du portail client
+            "url": f"/api/v1/documents/{doc_id}/view",
             "source": "df",
+            "actions": actions,
+            "total_ttc": d.get("total_ttc"),
         })
     return result
+
+
+async def sign_document_in_df(doc_id: str, signer_name: str, signer_email: str) -> dict:
+    """Signe un devis dans DF au nom du client."""
+    result = await _post(f"/api/documents/{doc_id}/sign", {
+        "signer_name": signer_name,
+        "signer_email": signer_email,
+        "signed_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return result or {"error": "Aucune réponse de DF"}
+
+
+async def get_payment_url(doc_id: str, client_email: str, redirect_url: str) -> str | None:
+    """Crée une session de paiement Mollie dans DF et retourne l'URL de redirection."""
+    result = await _post(f"/api/documents/{doc_id}/payment", {
+        "client_email": client_email,
+        "redirect_url": redirect_url,
+    })
+    if result and not result.get("error"):
+        return result.get("checkout_url") or result.get("payment_url") or result.get("url")
+    # Fallback: essai avec l'endpoint checkout/create
+    result2 = await _post("/api/checkout/create", {
+        "doc_id": doc_id,
+        "client_email": client_email,
+        "redirect_url": redirect_url,
+    })
+    if result2 and not result2.get("error"):
+        return result2.get("checkout_url") or result2.get("payment_url") or result2.get("url")
+    log.warning("[df] payment url introuvable pour doc %s : %s", doc_id, result)
+    return None
 
 
 async def fetch_document_html(doc_id: str) -> str | None:
@@ -131,6 +188,6 @@ def _doc_status(s: str) -> str:
     mapping = {
         "draft": "Brouillon", "sent": "Envoyé", "accepted": "Accepté",
         "refused": "Refusé", "paid": "Payé", "cancelled": "Annulé",
-        "pending": "En attente",
+        "pending": "En attente", "invoiced": "Facturé", "partially_paid": "Partiel",
     }
     return mapping.get((s or "").lower(), s)
