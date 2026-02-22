@@ -1,12 +1,11 @@
-"""Magic link + verify + JWT + refresh + logout."""
+"""Magic link + verify + JWT + refresh + login mot de passe + définir mot de passe."""
 from datetime import datetime
-from fastapi import APIRouter, Request, HTTPException, Depends
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, Request, HTTPException
+from pydantic import BaseModel, EmailStr, Field
 from app.db import get_db
 from app.config import (
     RATE_LIMIT_MAGIC_LINK_PER_HOUR,
     RATE_LIMIT_VERIFY_PER_HOUR,
-    CORS_ORIGINS,
 )
 from app.services.auth_service import (
     create_magic_token,
@@ -15,6 +14,8 @@ from app.services.auth_service import (
     decode_token,
     magic_link_url,
     magic_link_expires_at,
+    hash_password,
+    verify_password,
 )
 from app.services.rate_limit import is_allowed
 from app.services.email_service import send_magic_link_email
@@ -26,6 +27,14 @@ class MagicLinkRequest(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class SetPasswordRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
 
 @router.post("/magic-link")
 async def post_magic_link(req: MagicLinkRequest, request: Request):
@@ -94,4 +103,53 @@ async def refresh_tokens(body: RefreshRequest):
         raise HTTPException(status_code=401, detail="Token invalide.")
     access = create_access_token(sub)
     refresh = create_refresh_token(sub)
+    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
+
+@router.post("/login")
+async def login_password(body: LoginRequest, request: Request):
+    """Connexion par email + mot de passe."""
+    ip = request.client.host if request.client else "unknown"
+    if not is_allowed(f"login:{ip}", 3600, 10):
+        raise HTTPException(status_code=429, detail="Trop de tentatives. Réessayez plus tard.")
+    email = body.email.strip().lower()
+    db = get_db()
+    user = await db.client_users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect.")
+    ph = user.get("password_hash")
+    if not ph:
+        raise HTTPException(status_code=400, detail="Ce compte n'a pas de mot de passe. Utilisez le lien magique ou créez un mot de passe.")
+    if not verify_password(body.password, ph):
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect.")
+    user_id = str(user["_id"])
+    access = create_access_token(user_id)
+    refresh = create_refresh_token(user_id)
+    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
+
+@router.post("/set-password")
+async def set_password(body: SetPasswordRequest, request: Request):
+    """Créer ou réinitialiser le mot de passe du compte (email doit exister)."""
+    ip = request.client.host if request.client else "unknown"
+    if not is_allowed(f"setpwd:{ip}", 3600, 5):
+        raise HTTPException(status_code=429, detail="Trop de demandes. Réessayez plus tard.")
+    email = body.email.strip().lower()
+    db = get_db()
+    user = await db.client_users.find_one({"email": email})
+    if not user:
+        await db.client_users.insert_one({
+            "email": email,
+            "name": None,
+            "linked_client_id": None,
+            "password_hash": hash_password(body.password),
+            "created_at": datetime.utcnow(),
+        })
+        user = await db.client_users.find_one({"email": email})
+    else:
+        await db.client_users.update_one(
+            {"email": email},
+            {"$set": {"password_hash": hash_password(body.password)}},
+        )
+    user_id = str(user["_id"])
+    access = create_access_token(user_id)
+    refresh = create_refresh_token(user_id)
     return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}

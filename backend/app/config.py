@@ -27,9 +27,10 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "5"))
 MAX_TICKET_FILES = int(os.getenv("MAX_TICKET_FILES", "8"))
 
-# SMTP (emails magic link)
+# SMTP (emails magic link) — même schéma que le site principal (backend)
 SMTP_HOST = os.getenv("SMTP_HOST", "ssl0.ovh.net")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+# SMTP_PASS ou SMTP_PASSWORD pour partager le .env avec le site principal
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("SMTP_PASS", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "noreply@renoviapro.fr")

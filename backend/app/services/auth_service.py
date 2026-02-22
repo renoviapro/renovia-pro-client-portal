@@ -1,7 +1,8 @@
-"""Magic link + JWT."""
+"""Magic link + JWT + mot de passe."""
 import secrets
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
+from passlib.context import CryptContext
 from app.config import (
     JWT_SECRET,
     JWT_ALGORITHM,
@@ -10,6 +11,14 @@ from app.config import (
     MAGIC_LINK_EXPIRE_MINUTES,
     BASE_URL_CLIENT,
 )
+
+pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_ctx.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_ctx.verify(plain, hashed)
 
 def create_magic_token() -> str:
     return secrets.token_urlsafe(32)
