@@ -1,21 +1,30 @@
 services:
   backend:
+    container_name: client_portal_backend
     build: ./backend
-    ports: ["8001:8000"]
+    ports: ["127.0.0.1:8001:8000"]
     env_file: .env
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - CORS_ORIGINS=https://client.renoviapro.fr,http://localhost:5173
     volumes: ["./uploads:/app/uploads"]
     depends_on: [mongo]
+    networks: [default, web]
   mongo:
     image: mongo:7
     ports: ["27019:27017"]
     volumes: [mongo_data:/data/db]
   frontend:
+    container_name: client_portal_frontend
     build: ./frontend
-    ports: ["81:80"]
+    ports: ["127.0.0.1:81:80"]
     depends_on: [backend]
+    networks: [default, web]
+
+networks:
+  web:
+    external: true
+    name: web
 
 volumes:
   mongo_data:
