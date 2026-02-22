@@ -33,8 +33,10 @@ COMPTA_URL = os.getenv("COMPTA_URL", "https://app.renoviapro.fr")
 COMPTA_JWT_SECRET = os.getenv("COMPTA_JWT_SECRET", "")
 COMPTA_JWT_ALGORITHM = "HS256"
 
-# renovia-devis-en-ligne (devis & demandes client)
-DEVIS_URL = os.getenv("DEVIS_URL", "http://host.docker.internal:8010")
+# renovia-pros-DF (devis, factures)
+DF_URL = os.getenv("DF_URL", "https://df.renoviapro.fr")
+DF_JWT_SECRET = os.getenv("DF_JWT_SECRET", "")
+DF_ADMIN_USER_ID = os.getenv("DF_ADMIN_USER_ID", "")
 # ────────────────────────────────────────────────────────────────────────────
 
 # SMTP (emails magic link) — même schéma que le site principal (backend)
