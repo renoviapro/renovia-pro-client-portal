@@ -39,7 +39,7 @@ export default function TicketNew() {
           <input type="file" accept="image/*" multiple className="mt-2 block w-full text-sm text-white/70" onChange={(e) => setPhotos(Array.from(e.target.files || []))} />
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button type="submit" disabled={loading} className="rounded-full bg-[#febd17] px-8 py-3 font-semibold text-black hover:bg-[#ffd24d] disabled:opacity-70">
+        <button type="submit" disabled={loading} className="btn-gold w-full">
           {loading ? "Envoi..." : "Créer le ticket"}
         </button>
       </form>

@@ -96,8 +96,7 @@ export default function Login() {
 
   const inputClass =
     "w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-white/40 focus:border-[#FEBD17] focus:outline-none focus:ring-1 focus:ring-[#FEBD17]";
-  const btnClass =
-    "w-full inline-flex items-center justify-center rounded-[40px] bg-gradient-to-b from-[#FFE07A] to-[#FEBD17] px-[38px] py-[18px] text-[17px] font-semibold uppercase tracking-wide text-black shadow-[0_10px_22px_-8px_rgba(0,0,0,0.45)] transition-all hover:from-[#FFD24D] hover:to-[#E6AA00] disabled:opacity-60";
+  const btnClass = "btn-gold w-full";
 
   if (sent && mode === "magic") {
     return (

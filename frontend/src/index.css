@@ -26,3 +26,45 @@ h1, h2, h3 {
 ::-webkit-scrollbar-thumb { background: #FEBD17; border-radius: 4px; }
 
 html { scroll-behavior: smooth; }
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Black Ops One", sans-serif;
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, #FFE07A, #FEBD17);
+  color: #000;
+  text-decoration: none;
+  box-shadow: 0 10px 22px -8px rgba(0,0,0,0.35);
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  padding: 18px 38px;
+  width: 100%;
+  justify-content: center;
+}
+.btn-gold:hover { background: linear-gradient(to bottom, #FFD24D, #E6AA00); box-shadow: 0 12px 25px 0 rgba(0,0,0,0.45); }
+.btn-gold:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Black Ops One", sans-serif;
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 40px;
+  border: 2px solid #FEBD17;
+  background: transparent;
+  color: #FEBD17;
+  text-decoration: none;
+  padding: 16px 38px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.btn-outline:hover { background: #FEBD17; color: #000; }
