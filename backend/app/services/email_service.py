@@ -206,6 +206,34 @@ def send_reset_password_email(to: str, link: str) -> bool:
         return False
 
 
+def send_internal_notification(subject: str, html_content: str) -> bool:
+    """Envoie une notification interne à l'adresse Renovia Pro (contact@renoviapro.fr)."""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print("[EMAIL] SMTP non configuré, skip notification interne")
+        return False
+    to = "contact@renoviapro.fr"
+    msg = MIMEText(html_content, "html", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM or "noreply@renoviapro.fr"
+    msg["To"] = to
+    try:
+        port = int(SMTP_PORT)
+        if port == 465:
+            with smtplib.SMTP_SSL(SMTP_HOST, port, timeout=15) as s:
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        else:
+            with smtplib.SMTP(SMTP_HOST, port, timeout=15) as s:
+                s.starttls()
+                s.login(SMTP_USER, SMTP_PASSWORD)
+                s.sendmail(msg["From"], [to], msg.as_string())
+        print(f"[EMAIL] Notification interne envoyée : {subject}")
+        return True
+    except Exception as e:
+        print(f"[EMAIL] ERREUR notification interne: {e}")
+        return False
+
+
 def send_magic_link_email(to: str, link: str) -> bool:
     if not SMTP_USER or not SMTP_PASSWORD:
         print("[EMAIL] SMTP non configuré (SMTP_USER/SMTP_PASSWORD ou SMTP_PASS), skip magic link")
