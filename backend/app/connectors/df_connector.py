@@ -183,6 +183,46 @@ def _doc_type(t: str) -> str:
     return t.lower() or "document"
 
 
+async def get_maintenance_contract_for_client(email: str) -> dict[str, Any] | None:
+    """Récupère le contrat de maintenance actif du client depuis DF."""
+    data = await _get("/api/contracts", params={"status": "ACTIVE"})
+    if not data:
+        data = await _get("/api/contracts")
+    if not data:
+        return None
+    contracts = data if isinstance(data, list) else data.get("contracts", [])
+    # Chercher le contrat correspondant à cet email
+    for c in contracts:
+        if (c.get("client_email") or "").lower() == email.lower():
+            # Récupérer les factures du contrat
+            invoices = await _get(f"/api/contracts/{c['id']}/invoices") or []
+            if not isinstance(invoices, list):
+                invoices = invoices.get("invoices", [])
+            return {
+                "id": c.get("id"),
+                "contract_number": c.get("contract_number"),
+                "pack": c.get("pack"),
+                "pack_label": c.get("pack_label"),
+                "billing_cycle": c.get("billing_cycle"),
+                "price": c.get("price"),
+                "status": c.get("status"),
+                "next_billing_date": (c.get("next_billing_date") or "")[:10],
+                "start_date": (c.get("start_date") or "")[:10],
+                "invoices": [
+                    {
+                        "id": inv.get("id"),
+                        "amount": inv.get("amount"),
+                        "status": inv.get("status"),
+                        "due_date": (inv.get("due_date") or "")[:10],
+                        "paid_at": (inv.get("paid_at") or "")[:10],
+                        "pay_url": inv.get("pay_url"),
+                    }
+                    for inv in invoices
+                ],
+            }
+    return None
+
+
 def _doc_status(s: str) -> str:
     mapping = {
         "DRAFT": "Brouillon",
