@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api, apiUrl } from "../lib/api";
 
 type Invoice = {
   id: string;
@@ -35,6 +35,11 @@ const INV_STATUS: Record<string, { label: string; color: string }> = {
   UNPAID: { label: "En attente", color: "text-yellow-400" },
 };
 
+const PACKS = [
+  { id: "tranquille", label: "Tranquille", price: 29 },
+  { id: "tranquille_plus", label: "Tranquille +", price: 49 },
+];
+
 function fmt(d?: string) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("fr-FR");
@@ -43,6 +48,12 @@ function fmt(d?: string) {
 export default function Maintenance() {
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [selectedPack, setSelectedPack] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
     api<{ contract: Contract }>("/api/v1/maintenance")
@@ -51,6 +62,43 @@ export default function Maintenance() {
   }, []);
 
   const cycle = contract?.billing_cycle === "annual" ? "an" : "mois";
+
+  const handleDownloadContract = () => {
+    window.open(apiUrl("/api/v1/maintenance/contract-pdf"), "_blank");
+  };
+
+  const handleCancel = async () => {
+    setActionLoading(true);
+    try {
+      const res = await api<{ ok: boolean; message: string }>("/api/v1/maintenance/cancel", {
+        method: "POST",
+        body: JSON.stringify({ reason: cancelReason }),
+      });
+      setActionMessage({ ok: true, text: res.message });
+      setShowCancelModal(false);
+    } catch (e: unknown) {
+      setActionMessage({ ok: false, text: (e as Error).message });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!selectedPack) return;
+    setActionLoading(true);
+    try {
+      const res = await api<{ ok: boolean; message: string }>("/api/v1/maintenance/upgrade", {
+        method: "POST",
+        body: JSON.stringify({ new_pack: selectedPack }),
+      });
+      setActionMessage({ ok: true, text: res.message });
+      setShowUpgradeModal(false);
+    } catch (e: unknown) {
+      setActionMessage({ ok: false, text: (e as Error).message });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -107,6 +155,39 @@ export default function Maintenance() {
                 </p>
               </div>
             )}
+
+            {/* Actions */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                onClick={handleDownloadContract}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Télécharger le contrat
+              </button>
+              
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FEBD17]/10 border border-[#FEBD17]/30 text-[#FEBD17] text-sm font-medium hover:bg-[#FEBD17]/20 transition-colors"
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+                Changer d'abonnement
+              </button>
+
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-colors"
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+                </svg>
+                Résilier
+              </button>
+            </div>
           </div>
 
           {/* Factures */}
@@ -147,11 +228,97 @@ export default function Maintenance() {
             </div>
           )}
 
-          {/* Résiliation */}
-          <p className="text-white/20 text-xs text-center pt-2" style={{ fontFamily: "'Poppins', sans-serif" }}>
-            Pour modifier ou résilier votre contrat, contactez-nous :{" "}
+          {/* Message de confirmation */}
+          {actionMessage && (
+            <div className={`p-4 rounded-xl border ${actionMessage.ok ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+              <p className="text-sm">{actionMessage.text}</p>
+            </div>
+          )}
+
+          {/* Contact */}
+          <p className="text-white/20 text-xs text-center pt-2">
+            Une question ? Contactez-nous :{" "}
             <a href="mailto:contact@renoviapro.fr" className="text-white/40 hover:text-white/60">contact@renoviapro.fr</a>
           </p>
+        </div>
+      )}
+
+      {/* Modal Résiliation */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-white mb-4">Demande de résiliation</h3>
+            <p className="text-white/60 text-sm mb-4">
+              Êtes-vous sûr de vouloir résilier votre contrat ? Cette action enverra une demande à notre équipe.
+            </p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Raison de la résiliation (optionnel)"
+              className="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 resize-none"
+              rows={3}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-medium hover:bg-white/10"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/30 disabled:opacity-50"
+              >
+                {actionLoading ? "Envoi..." : "Confirmer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Changement d'abonnement */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-white mb-4">Changer d'abonnement</h3>
+            <p className="text-white/60 text-sm mb-4">
+              Sélectionnez votre nouveau pack. Un conseiller vous contactera pour finaliser le changement.
+            </p>
+            <div className="space-y-2 mb-4">
+              {PACKS.filter(p => p.id !== contract?.pack).map(pack => (
+                <button
+                  key={pack.id}
+                  onClick={() => setSelectedPack(pack.id)}
+                  className={`w-full p-4 rounded-xl border text-left transition-colors ${
+                    selectedPack === pack.id
+                      ? "bg-[#FEBD17]/10 border-[#FEBD17]/40"
+                      : "bg-white/5 border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-semibold">{pack.label}</span>
+                    <span className="text-[#FEBD17] font-bold">{pack.price}€/mois</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-medium hover:bg-white/10"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleUpgrade}
+                disabled={!selectedPack || actionLoading}
+                className="flex-1 py-2.5 rounded-xl bg-[#FEBD17]/20 border border-[#FEBD17]/30 text-[#FEBD17] text-sm font-bold hover:bg-[#FEBD17]/30 disabled:opacity-50"
+              >
+                {actionLoading ? "Envoi..." : "Confirmer"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

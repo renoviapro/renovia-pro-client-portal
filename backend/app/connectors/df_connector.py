@@ -238,3 +238,32 @@ def _doc_status(s: str) -> str:
         "PARTIALLY_PAID": "Partiel",
     }
     return mapping.get((s or "").upper(), s)
+
+
+async def get_contract_pdf_bytes(contract_id: str, email: str) -> bytes | None:
+    """Télécharge le PDF d'un contrat depuis DF."""
+    if not DF_JWT_SECRET or not DF_ADMIN_USER_ID:
+        return None
+    url = f"{DF_URL.rstrip('/')}/api/contracts/{contract_id}/pdf"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(url, headers=_headers(), params={"email": email})
+        if r.status_code == 200:
+            return r.content
+        log.warning("[df] contract pdf %s → %s", contract_id, r.status_code)
+        return None
+    except Exception as exc:
+        log.error("[df] contract pdf erreur : %s", exc)
+        return None
+
+
+async def request_contract_cancellation(contract_id: str, email: str, reason: str) -> bool:
+    """Demande de résiliation via l'API client-portal de DF."""
+    result = await _post(f"/api/client-portal/contracts/{contract_id}/cancel", {"email": email, "reason": reason})
+    return result is not None and result.get("ok", False)
+
+
+async def request_contract_upgrade(contract_id: str, email: str, new_pack: str) -> bool:
+    """Demande de changement d'abonnement via l'API client-portal de DF."""
+    result = await _post(f"/api/client-portal/contracts/{contract_id}/upgrade", {"email": email, "new_pack": new_pack})
+    return result is not None and result.get("ok", False)

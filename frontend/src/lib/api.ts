@@ -36,3 +36,10 @@ export async function apiForm(path: string, formData: FormData, token?: string |
   }
   return res.json();
 }
+
+export function apiUrl(path: string): string {
+  const token = getToken();
+  const url = new URL(`${API}${path}`, window.location.origin);
+  if (token) url.searchParams.set("token", token);
+  return url.toString();
+}
