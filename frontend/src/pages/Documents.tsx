@@ -17,6 +17,75 @@ const typeConfig: Record<string, { icon: string; color: string }> = {
 const CACHE_KEY = "docs_cache";
 const CACHE_TTL = 5 * 60 * 1000;
 
+function DocumentRow({ doc: d, openPreview }: { doc: Doc; openPreview: (d: Doc) => void }) {
+  const cfg = typeConfig[d.type?.toLowerCase()] ?? { icon: "📄", color: "bg-white/5 text-white/40 border-white/10" };
+  return (
+    <div className="flex items-center gap-3 bg-[#161616] border border-white/5 rounded-2xl p-4 flex-wrap sm:flex-nowrap">
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-medium text-sm truncate">{d.label}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-white/30 text-xs">{d.date}</span>
+          {d.total_ttc != null && (
+            <span className="text-white/40 text-xs font-medium">
+              {d.total_ttc.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {d.status && (
+        <span className={`text-xs px-2 py-1 rounded-full border font-medium shrink-0 ${cfg.color}`}>
+          {d.status}
+        </span>
+      )}
+
+      {/* Bouton Signer */}
+      {d.actions?.includes("sign") && d.sign_url && (
+        <a
+          href={d.sign_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEBD17] text-black text-xs font-bold hover:bg-[#ffd04d] transition-colors shrink-0 no-underline"
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+          </svg>
+          Signer
+        </a>
+      )}
+
+      {/* Bouton Payer */}
+      {d.actions?.includes("pay") && d.pay_url && (
+        <a
+          href={d.pay_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors shrink-0 no-underline"
+        >
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          Payer
+        </a>
+      )}
+
+      {/* Bouton aperçu */}
+      {d.url ? (
+        <button
+          onClick={() => openPreview(d)}
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
+          title="Aperçu"
+        >
+          <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function readCache(): Doc[] | null {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
@@ -99,79 +168,54 @@ export default function Documents() {
       )}
 
       {!loading && items.length > 0 && (
-        <div className="space-y-3">
-          {items.map(d => {
-            const cfg = typeConfig[d.type?.toLowerCase()] ?? { icon: "📄", color: "bg-white/5 text-white/40 border-white/10" };
-            return (
-              <div key={d.id} className="flex items-center gap-3 bg-[#161616] border border-white/5 rounded-2xl p-4 flex-wrap sm:flex-nowrap">
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-lg shrink-0">
-                  {cfg.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">{d.label}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-white/30 text-xs">{d.date}</span>
-                    {d.total_ttc != null && (
-                      <span className="text-white/40 text-xs font-medium">
-                        {d.total_ttc.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium shrink-0 ${cfg.color}`}>
-                  {d.type}
-                </span>
-                {d.status && (
-                  <span className="text-xs text-white/30 shrink-0 hidden sm:block">{d.status}</span>
-                )}
-
-                {/* Bouton Signer → page publique DF /sign/{token} */}
-                {d.actions?.includes("sign") && d.sign_url && (
-                  <a
-                    href={d.sign_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEBD17] text-black text-xs font-bold hover:bg-[#ffd04d] transition-colors shrink-0 no-underline"
-                  >
-                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                    </svg>
-                    Signer
-                  </a>
-                )}
-
-                {/* Bouton Payer → page publique DF /pay/{token} */}
-                {d.actions?.includes("pay") && d.pay_url && (
-                  <a
-                    href={d.pay_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/20 transition-colors shrink-0 no-underline"
-                  >
-                    <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
-                    Payer
-                  </a>
-                )}
-
-                {/* Bouton aperçu via proxy sécurisé */}
-                {d.url ? (
-                  <button
-                    onClick={() => openPreview(d)}
-                    className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0"
-                    title="Aperçu"
-                  >
-                    <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
-                ) : null}
+        <div className="space-y-8">
+          {/* Section Devis */}
+          {items.filter(d => d.type?.toLowerCase() === "devis").length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">📋</span>
+                <h3 className="text-white/60 text-sm font-semibold uppercase tracking-wider">Devis</h3>
+                <span className="text-white/30 text-xs">({items.filter(d => d.type?.toLowerCase() === "devis").length})</span>
               </div>
-            );
-          })}
+              <div className="space-y-2">
+                {items.filter(d => d.type?.toLowerCase() === "devis").sort((a, b) => b.date.localeCompare(a.date)).map(d => (
+                  <DocumentRow key={d.id} doc={d} openPreview={openPreview} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section Factures */}
+          {items.filter(d => d.type?.toLowerCase() === "facture").length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">🧾</span>
+                <h3 className="text-white/60 text-sm font-semibold uppercase tracking-wider">Factures</h3>
+                <span className="text-white/30 text-xs">({items.filter(d => d.type?.toLowerCase() === "facture").length})</span>
+              </div>
+              <div className="space-y-2">
+                {items.filter(d => d.type?.toLowerCase() === "facture").sort((a, b) => b.date.localeCompare(a.date)).map(d => (
+                  <DocumentRow key={d.id} doc={d} openPreview={openPreview} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section Autres documents */}
+          {items.filter(d => !["devis", "facture"].includes(d.type?.toLowerCase())).length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">📄</span>
+                <h3 className="text-white/60 text-sm font-semibold uppercase tracking-wider">Autres documents</h3>
+                <span className="text-white/30 text-xs">({items.filter(d => !["devis", "facture"].includes(d.type?.toLowerCase())).length})</span>
+              </div>
+              <div className="space-y-2">
+                {items.filter(d => !["devis", "facture"].includes(d.type?.toLowerCase())).sort((a, b) => b.date.localeCompare(a.date)).map(d => (
+                  <DocumentRow key={d.id} doc={d} openPreview={openPreview} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
