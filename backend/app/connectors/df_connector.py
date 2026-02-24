@@ -15,7 +15,7 @@ from typing import Any
 import httpx
 from jose import jwt
 
-from app.config import DF_URL, DF_JWT_SECRET, DF_ADMIN_USER_ID
+from app.config import DF_URL, DF_JWT_SECRET, DF_ADMIN_USER_ID, DF_CLIENT_PORTAL_API_KEY
 
 log = logging.getLogger(__name__)
 
@@ -184,20 +184,66 @@ def _doc_type(t: str) -> str:
 
 
 async def get_maintenance_contract_for_client(email: str) -> dict[str, Any] | None:
-    """Récupère le contrat de maintenance actif du client depuis DF."""
+    """Récupère le contrat de maintenance actif et les factures du client depuis DF via l'API client-portal."""
+    if not DF_CLIENT_PORTAL_API_KEY:
+        log.warning("[df] DF_CLIENT_PORTAL_API_KEY non configurée, fallback sur API admin")
+        return await _get_maintenance_contract_fallback(email)
+    
+    url = f"{DF_URL.rstrip('/')}/api/client-portal/contract"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                url,
+                params={"email": email},
+                headers={"X-API-Key": DF_CLIENT_PORTAL_API_KEY}
+            )
+        if r.status_code != 200:
+            log.warning("[df] client-portal/contract → %s : %s", r.status_code, r.text[:100])
+            return None
+        data = r.json()
+    except Exception as exc:
+        log.error("[df] client-portal/contract erreur : %s", exc)
+        return None
+
+    contract = data.get("contract")
+    if not contract:
+        return None
+
+    invoices_raw = data.get("invoices") or []
+    return {
+        "id": contract.get("id", ""),
+        "contract_number": contract.get("contract_number", ""),
+        "pack": contract.get("pack", ""),
+        "pack_label": contract.get("plan", contract.get("pack_label", "")),
+        "billing_cycle": contract.get("billing_cycle", "monthly"),
+        "price": contract.get("price", 0),
+        "status": "ACTIVE",
+        "next_billing_date": contract.get("next_renewal", ""),
+        "start_date": contract.get("start_date", ""),
+        "invoices": [
+            {
+                "id": inv.get("id"),
+                "amount": inv.get("amount"),
+                "status": "PAID" if inv.get("status") == "PAID" else "UNPAID",
+                "due_date": inv.get("due_date", ""),
+                "paid_at": inv.get("created_at", "") if inv.get("status") == "PAID" else "",
+                "pay_url": inv.get("payment_url"),
+            }
+            for inv in invoices_raw
+        ],
+    }
+
+
+async def _get_maintenance_contract_fallback(email: str) -> dict[str, Any] | None:
+    """Fallback: récupère via l'API admin (sans factures)."""
     data = await _get("/api/contracts", params={"status": "ACTIVE"})
     if not data:
         data = await _get("/api/contracts")
     if not data:
         return None
     contracts = data if isinstance(data, list) else data.get("contracts", [])
-    # Chercher le contrat correspondant à cet email
     for c in contracts:
         if (c.get("client_email") or "").lower() == email.lower():
-            # Récupérer les factures du contrat
-            invoices = await _get(f"/api/contracts/{c['id']}/invoices") or []
-            if not isinstance(invoices, list):
-                invoices = invoices.get("invoices", [])
             return {
                 "id": c.get("id"),
                 "contract_number": c.get("contract_number"),
@@ -208,17 +254,7 @@ async def get_maintenance_contract_for_client(email: str) -> dict[str, Any] | No
                 "status": c.get("status"),
                 "next_billing_date": (c.get("next_billing_date") or "")[:10],
                 "start_date": (c.get("start_date") or "")[:10],
-                "invoices": [
-                    {
-                        "id": inv.get("id"),
-                        "amount": inv.get("amount"),
-                        "status": inv.get("status"),
-                        "due_date": (inv.get("due_date") or "")[:10],
-                        "paid_at": (inv.get("paid_at") or "")[:10],
-                        "pay_url": inv.get("pay_url"),
-                    }
-                    for inv in invoices
-                ],
+                "invoices": [],
             }
     return None
 

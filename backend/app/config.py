@@ -37,6 +37,7 @@ COMPTA_JWT_ALGORITHM = "HS256"
 DF_URL = os.getenv("DF_URL", "https://df.renoviapro.fr")
 DF_JWT_SECRET = os.getenv("DF_JWT_SECRET", "")
 DF_ADMIN_USER_ID = os.getenv("DF_ADMIN_USER_ID", "")
+DF_CLIENT_PORTAL_API_KEY = os.getenv("DF_CLIENT_PORTAL_API_KEY", "")
 # ────────────────────────────────────────────────────────────────────────────
 
 # SMTP (emails magic link) — même schéma que le site principal (backend)
