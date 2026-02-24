@@ -99,60 +99,105 @@ async def _ensure_payment_token(doc_id: str, existing_token: str | None) -> str 
 
 
 async def get_documents_for_client(email: str) -> list[dict[str, Any]]:
-    """Retourne les devis et factures DF envoyés au client (pas les brouillons)."""
-    client_id = await _get_df_client_id(email)
-    if not client_id:
-        log.info("[df] client introuvable pour email=%s", email)
-        return []
-
-    data = await _get("/api/documents", {"client_id": client_id})
-    if not data:
-        return []
-
+    """Retourne les devis, factures DF et factures de maintenance envoyés au client."""
     result = []
-    for d in (data if isinstance(data, list) else []):
-        status_raw = (d.get("status") or "").upper()
-        if status_raw not in _CLIENT_VISIBLE_STATUSES:
-            continue
-        if d.get("archived_at") or d.get("deleted_at"):
-            continue
+    
+    # 1. Documents classiques (devis/factures de chantier)
+    client_id = await _get_df_client_id(email)
+    if client_id:
+        data = await _get("/api/documents", {"client_id": client_id})
+        if data:
+            for d in (data if isinstance(data, list) else []):
+                status_raw = (d.get("status") or "").upper()
+                if status_raw not in _CLIENT_VISIBLE_STATUSES:
+                    continue
+                if d.get("archived_at") or d.get("deleted_at"):
+                    continue
 
-        doc_id = d.get("id", "")
-        raw_doc_type = (d.get("doc_type") or "").upper()
-        doc_type = _doc_type(raw_doc_type)
-        label = d.get("doc_number") or d.get("title") or "Document"
-        if d.get("doc_number") and d.get("title"):
-            label = f"{d['doc_number']} – {d['title']}"
+                doc_id = d.get("id", "")
+                raw_doc_type = (d.get("doc_type") or "").upper()
+                doc_type = _doc_type(raw_doc_type)
+                label = d.get("doc_number") or d.get("title") or "Document"
+                if d.get("doc_number") and d.get("title"):
+                    label = f"{d['doc_number']} – {d['title']}"
 
-        # URLs de signature et paiement (pages publiques DF)
-        sign_url: str | None = None
-        pay_url: str | None = None
-        actions: list[str] = []
+                sign_url: str | None = None
+                pay_url: str | None = None
+                actions: list[str] = []
 
-        if doc_type == "devis" and status_raw == "SENT":
-            token = await _ensure_signing_token(doc_id, d.get("public_signing_token"))
-            if token:
-                sign_url = f"{DF_URL.rstrip('/')}/sign/{token}"
-                actions.append("sign")
+                if doc_type == "devis" and status_raw == "SENT":
+                    token = await _ensure_signing_token(doc_id, d.get("public_signing_token"))
+                    if token:
+                        sign_url = f"{DF_URL.rstrip('/')}/sign/{token}"
+                        actions.append("sign")
 
-        if doc_type == "facture" and status_raw in ("SENT", "TRANSFER_PENDING", "PARTIALLY_PAID"):
-            token = await _ensure_payment_token(doc_id, d.get("public_payment_token"))
-            if token:
-                pay_url = f"{DF_URL.rstrip('/')}/pay/{token}"
-                actions.append("pay")
+                if doc_type == "facture" and status_raw in ("SENT", "TRANSFER_PENDING", "PARTIALLY_PAID"):
+                    token = await _ensure_payment_token(doc_id, d.get("public_payment_token"))
+                    if token:
+                        pay_url = f"{DF_URL.rstrip('/')}/pay/{token}"
+                        actions.append("pay")
 
+                result.append({
+                    "id": doc_id,
+                    "type": doc_type,
+                    "label": label,
+                    "date": str(d.get("issue_date") or d.get("created_at", ""))[:10],
+                    "status": _doc_status(status_raw),
+                    "url": f"/api/v1/documents/{doc_id}/view",
+                    "sign_url": sign_url,
+                    "pay_url": pay_url,
+                    "actions": actions,
+                    "total_ttc": d.get("total_ttc"),
+                    "source": "df",
+                })
+    
+    # 2. Factures de maintenance (via API client-portal)
+    maintenance_invoices = await _get_maintenance_invoices(email)
+    result.extend(maintenance_invoices)
+    
+    return result
+
+
+async def _get_maintenance_invoices(email: str) -> list[dict[str, Any]]:
+    """Récupère les factures de maintenance depuis l'API client-portal DF."""
+    if not DF_CLIENT_PORTAL_API_KEY:
+        return []
+    
+    url = f"{DF_URL.rstrip('/')}/api/client-portal/contract"
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                url,
+                params={"email": email},
+                headers={"X-API-Key": DF_CLIENT_PORTAL_API_KEY}
+            )
+        if r.status_code != 200:
+            return []
+        data = r.json()
+    except Exception as exc:
+        log.error("[df] maintenance invoices erreur : %s", exc)
+        return []
+
+    contract = data.get("contract")
+    if not contract:
+        return []
+
+    invoices_raw = data.get("invoices") or []
+    result = []
+    for inv in invoices_raw:
+        status = "Payée" if inv.get("status") == "PAID" else "En attente"
         result.append({
-            "id": doc_id,
-            "type": doc_type,
-            "label": label,
-            "date": str(d.get("issue_date") or d.get("created_at", ""))[:10],
-            "status": _doc_status(status_raw),
-            "url": f"/api/v1/documents/{doc_id}/view",
-            "sign_url": sign_url,
-            "pay_url": pay_url,
-            "actions": actions,
-            "total_ttc": d.get("total_ttc"),
-            "source": "df",
+            "id": inv.get("id"),
+            "type": "facture",
+            "label": f"Facture Maintenance – {inv.get('reference', contract.get('contract_number', ''))}",
+            "date": inv.get("created_at", inv.get("due_date", ""))[:10] if inv.get("created_at") or inv.get("due_date") else "",
+            "status": status,
+            "url": f"/api/v1/maintenance/invoice-pdf/{inv.get('id')}",
+            "sign_url": None,
+            "pay_url": inv.get("payment_url") if inv.get("status") != "PAID" else None,
+            "actions": ["pay"] if inv.get("payment_url") and inv.get("status") != "PAID" else [],
+            "total_ttc": inv.get("amount"),
+            "source": "maintenance",
         })
     return result
 
