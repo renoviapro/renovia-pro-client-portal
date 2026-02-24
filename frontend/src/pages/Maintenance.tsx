@@ -63,8 +63,26 @@ export default function Maintenance() {
 
   const cycle = contract?.billing_cycle === "annual" ? "an" : "mois";
 
-  const handleDownloadContract = () => {
-    window.open(apiUrl("/api/v1/maintenance/contract-pdf"), "_blank");
+  const handleDownloadContract = async () => {
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("/api/v1/maintenance/contract-pdf", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erreur téléchargement");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `contrat-maintenance-${contract?.contract_number || "renovia"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setActionMessage({ ok: false, text: "Impossible de télécharger le contrat" });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleCancel = async () => {
