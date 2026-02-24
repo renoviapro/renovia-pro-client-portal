@@ -188,7 +188,7 @@ export default function Documents() {
 
   const sortedItems = [...filteredItems].sort((a, b) => b.date.localeCompare(a.date));
 
-  const tabs: { id: TabType; label: string; count: number; icon: JSX.Element }[] = [
+  const tabs: { id: TabType; label: string; count: number; icon: React.ReactNode }[] = [
     { 
       id: "all", 
       label: "Tout", 
