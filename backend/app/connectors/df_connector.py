@@ -293,6 +293,27 @@ async def get_contract_pdf_bytes(contract_id: str, email: str) -> bytes | None:
         return None
 
 
+async def get_invoice_pdf_bytes(invoice_id: str, email: str) -> bytes | None:
+    """Télécharge le PDF d'une facture de maintenance depuis DF via l'API client-portal."""
+    if not DF_CLIENT_PORTAL_API_KEY:
+        return None
+    url = f"{DF_URL.rstrip('/')}/api/client-portal/invoice-pdf/{invoice_id}"
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(
+                url,
+                params={"email": email},
+                headers={"X-API-Key": DF_CLIENT_PORTAL_API_KEY}
+            )
+        if r.status_code == 200:
+            return r.content
+        log.warning("[df] invoice pdf %s → %s", invoice_id, r.status_code)
+        return None
+    except Exception as exc:
+        log.error("[df] invoice pdf erreur : %s", exc)
+        return None
+
+
 async def request_contract_cancellation(contract_id: str, email: str, reason: str) -> bool:
     """Demande de résiliation via l'API client-portal de DF."""
     result = await _post(f"/api/client-portal/contracts/{contract_id}/cancel", {"email": email, "reason": reason})

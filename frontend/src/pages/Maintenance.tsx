@@ -85,6 +85,25 @@ export default function Maintenance() {
     }
   };
 
+  const handleDownloadInvoice = async (invoiceId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`/api/v1/maintenance/invoice-pdf/${invoiceId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erreur téléchargement");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `facture-maintenance-${invoiceId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setActionMessage({ ok: false, text: "Impossible de télécharger la facture" });
+    }
+  };
+
   const handleCancel = async () => {
     setActionLoading(true);
     try {
@@ -225,6 +244,15 @@ export default function Maintenance() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-[#FEBD17] font-semibold">{Number(inv.amount).toFixed(2)}€</span>
+                        <button
+                          onClick={() => handleDownloadInvoice(inv.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-xs font-medium hover:bg-white/10 transition-colors"
+                        >
+                          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                          </svg>
+                          PDF
+                        </button>
                         {inv.status === "UNPAID" && inv.pay_url && (
                           <a
                             href={inv.pay_url}

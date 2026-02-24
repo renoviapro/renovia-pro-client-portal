@@ -38,6 +38,23 @@ async def download_contract_pdf(user: dict = Depends(get_current_user)):
     )
 
 
+@router.get("/maintenance/invoice-pdf/{invoice_id}")
+async def download_invoice_pdf(invoice_id: str, user: dict = Depends(get_current_user)):
+    """Télécharge le PDF d'une facture de maintenance."""
+    from app.connectors.df_connector import get_invoice_pdf_bytes
+    
+    pdf_bytes = await get_invoice_pdf_bytes(invoice_id, user["email"])
+    if not pdf_bytes:
+        raise HTTPException(status_code=404, detail="Facture non trouvée")
+    
+    filename = f"facture-maintenance-{invoice_id[:8]}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 class CancelRequest(BaseModel):
     reason: Optional[str] = ""
 
