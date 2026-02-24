@@ -27,53 +27,59 @@ function DocumentCard({ doc: d, openPreview }: { doc: Doc; openPreview: (d: Doc)
   const statusColor = statusColors[d.status || ""] || "bg-white/5 text-white/40 border-white/10";
   
   return (
-    <div className={`group relative bg-[#161616] border rounded-2xl p-5 transition-all hover:border-white/20 ${
+    <div className={`group bg-[#161616] border rounded-2xl overflow-hidden transition-all hover:border-white/20 ${
       isMaintenance ? "border-[#FEBD17]/20" : "border-white/5"
     }`}>
-      {/* Badge source */}
+      {/* Header coloré pour maintenance */}
       {isMaintenance && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-[#FEBD17]/20 border border-[#FEBD17]/30 text-[#FEBD17] text-[10px] font-bold uppercase tracking-wider">
-          Maintenance
+        <div className="bg-gradient-to-r from-[#FEBD17]/20 to-[#FEBD17]/5 px-5 py-2 flex items-center gap-2 border-b border-[#FEBD17]/10">
+          <svg width="14" height="14" fill="none" stroke="#FEBD17" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          <span className="text-[#FEBD17] text-xs font-semibold">Contrat Maintenance</span>
         </div>
       )}
       
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          {/* Type badge */}
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-              d.type?.toLowerCase() === "devis" 
-                ? "bg-blue-500/10 text-blue-400" 
-                : "bg-emerald-500/10 text-emerald-400"
-            }`}>
-              {d.type}
-            </span>
-            {d.status && (
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
-                {d.status}
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            {/* Type badge */}
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                isMaintenance
+                  ? "bg-[#FEBD17]/10 text-[#FEBD17]"
+                  : d.type?.toLowerCase() === "devis" 
+                    ? "bg-blue-500/10 text-blue-400" 
+                    : "bg-emerald-500/10 text-emerald-400"
+              }`}>
+                {d.type}
               </span>
-            )}
-          </div>
-          
-          {/* Label */}
-          <p className="text-white font-semibold text-sm leading-tight mb-1 line-clamp-2">{d.label}</p>
-          
-          {/* Meta */}
-          <div className="flex items-center gap-3 text-xs text-white/40">
-            <span className="flex items-center gap-1">
-              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              {new Date(d.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-            </span>
-            {d.total_ttc != null && (
-              <span className="font-semibold text-white/60">
-                {d.total_ttc.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+              {d.status && (
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${statusColor}`}>
+                  {d.status}
+                </span>
+              )}
+            </div>
+            
+            {/* Label */}
+            <p className="text-white font-semibold text-sm leading-tight mb-1 line-clamp-2">{d.label}</p>
+            
+            {/* Meta */}
+            <div className="flex items-center gap-3 text-xs text-white/40">
+              <span className="flex items-center gap-1">
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {new Date(d.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
               </span>
-            )}
+              {d.total_ttc != null && (
+                <span className={`font-semibold ${isMaintenance ? "text-[#FEBD17]" : "text-white/60"}`}>
+                  {d.total_ttc.toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
       
       {/* Actions */}
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
@@ -125,6 +131,7 @@ function DocumentCard({ doc: d, openPreview }: { doc: Doc; openPreview: (d: Doc)
         {!d.actions?.includes("sign") && !d.actions?.includes("pay") && !d.url && (
           <span className="text-white/20 text-xs">Aucune action disponible</span>
         )}
+      </div>
       </div>
     </div>
   );
