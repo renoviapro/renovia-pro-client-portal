@@ -355,7 +355,7 @@ export default function Maintenance() {
     <div className="space-y-8 fade-in max-w-3xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Maintenance</h1>
+          <h1 className="text-2xl text-gray-900" style={{ fontFamily: "'Black Ops One', cursive" }}>Maintenance</h1>
           <p className="text-gray-500 text-sm mt-1">Gérez vos contrats de maintenance par bien.</p>
         </div>
         <button
@@ -418,7 +418,7 @@ export default function Maintenance() {
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
-          <h3 className="text-gray-900 font-semibold text-lg mb-2">Aucun contrat de maintenance</h3>
+          <h3 className="text-gray-900 text-lg mb-2" style={{ fontFamily: "'Black Ops One', cursive" }}>Aucun contrat de maintenance</h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
             Ajoutez un bien pour bénéficier de nos services de maintenance.
           </p>
@@ -436,7 +436,7 @@ export default function Maintenance() {
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Ajouter un nouveau bien</h3>
+            <h3 className="text-xl text-gray-900 mb-6" style={{ fontFamily: "'Black Ops One', cursive" }}>Ajouter un nouveau bien</h3>
 
             <div className="space-y-5">
               <div>
@@ -552,7 +552,7 @@ export default function Maintenance() {
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Demande de résiliation</h3>
+            <h3 className="text-xl text-gray-900 mb-4" style={{ fontFamily: "'Black Ops One', cursive" }}>Demande de résiliation</h3>
             <p className="text-gray-500 text-sm mb-5">
               Êtes-vous sûr de vouloir résilier ce contrat ?
             </p>
@@ -586,7 +586,7 @@ export default function Maintenance() {
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-gray-900 mb-5">Changer d'abonnement</h3>
+            <h3 className="text-xl text-gray-900 mb-5" style={{ fontFamily: "'Black Ops One', cursive" }}>Changer d'abonnement</h3>
             <div className="space-y-3">
               {PACKS.filter(p => p.id !== contracts.find(c => c.id === showUpgradeModal)?.pack).map(pack => (
                 <button

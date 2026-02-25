@@ -164,7 +164,7 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div>
-        <h2 className="text-gray-900 font-semibold text-lg mb-4">Vue d'ensemble</h2>
+        <h2 className="text-gray-900 text-lg mb-4" style={{ fontFamily: "'Black Ops One', cursive" }}>Vue d'ensemble</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={<svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14,2 14,8 20,8" /></svg>}
@@ -199,7 +199,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-gray-900 font-semibold text-lg mb-4">Actions rapides</h2>
+        <h2 className="text-gray-900 text-lg mb-4" style={{ fontFamily: "'Black Ops One', cursive" }}>Actions rapides</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           <QuickAction
             to="/tickets/new"

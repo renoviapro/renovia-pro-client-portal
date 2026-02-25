@@ -227,7 +227,7 @@ export default function Documents() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mes documents</h1>
+          <h1 className="text-2xl text-gray-900" style={{ fontFamily: "'Black Ops One', cursive" }}>Mes documents</h1>
           <p className="text-gray-500 text-sm mt-1">Consultez et gérez vos devis, factures et documents de maintenance.</p>
         </div>
         <button
@@ -295,7 +295,7 @@ export default function Documents() {
               <polyline points="14,2 14,8 20,8" />
             </svg>
           </div>
-          <h3 className="text-gray-900 font-semibold text-lg mb-2">
+          <h3 className="text-gray-900 text-lg mb-2" style={{ fontFamily: "'Black Ops One', cursive" }}>
             {activeTab === "all" ? "Aucun document" : `Aucun ${activeTab === "devis" ? "devis" : activeTab === "factures" ? "facture" : "document de maintenance"}`}
           </h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto">

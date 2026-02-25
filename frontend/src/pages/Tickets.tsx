@@ -36,7 +36,7 @@ export default function Tickets() {
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Support SAV</h1>
+          <h1 className="text-2xl text-gray-900" style={{ fontFamily: "'Black Ops One', cursive" }}>Support SAV</h1>
           <p className="text-gray-500 text-sm mt-1">Diagnostic 49€ — offert si prise en charge, déduit si devis accepté.</p>
         </div>
         <Link 
@@ -90,7 +90,7 @@ export default function Tickets() {
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
             </svg>
           </div>
-          <h3 className="text-gray-900 font-semibold text-lg mb-2">Aucun ticket</h3>
+          <h3 className="text-gray-900 text-lg mb-2" style={{ fontFamily: "'Black Ops One', cursive" }}>Aucun ticket</h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
             Vous n'avez pas encore créé de demande de support.
           </p>

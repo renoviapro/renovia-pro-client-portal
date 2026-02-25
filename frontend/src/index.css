@@ -25,9 +25,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 {
-  font-family: "Black Ops One", sans-serif !important;
-  letter-spacing: 0.01em;
+h1, h2, h3, .heading {
+  font-family: "Black Ops One", cursive !important;
+  letter-spacing: 0.02em;
+  font-weight: 400 !important;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
