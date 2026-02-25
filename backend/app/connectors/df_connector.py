@@ -369,3 +369,75 @@ async def request_contract_upgrade(contract_id: str, email: str, new_pack: str) 
     """Demande de changement d'abonnement via l'API client-portal de DF."""
     result = await _post(f"/api/client-portal/contracts/{contract_id}/upgrade", {"email": email, "new_pack": new_pack})
     return result is not None and result.get("ok", False)
+
+
+async def get_all_contracts_for_client(email: str) -> list[dict[str, Any]]:
+    """Récupère tous les contrats de maintenance d'un client depuis DF via l'API client-portal."""
+    if not DF_CLIENT_PORTAL_API_KEY:
+        log.warning("[df] DF_CLIENT_PORTAL_API_KEY non configurée")
+        return []
+    
+    url = f"{DF_URL.rstrip('/')}/api/client-portal/contracts"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                url,
+                params={"email": email},
+                headers={"X-API-Key": DF_CLIENT_PORTAL_API_KEY}
+            )
+        if r.status_code != 200:
+            log.warning("[df] client-portal/contracts → %s : %s", r.status_code, r.text[:100])
+            return []
+        data = r.json()
+    except Exception as exc:
+        log.error("[df] client-portal/contracts erreur : %s", exc)
+        return []
+
+    return data.get("contracts", [])
+
+
+async def create_contract_for_client(
+    email: str,
+    pack: str,
+    billing_cycle: str,
+    property_address: str,
+    property_postal_code: str,
+    property_city: str,
+    property_label: str = "",
+) -> dict[str, Any]:
+    """Crée un nouveau contrat depuis l'espace client via l'API client-portal."""
+    if not DF_CLIENT_PORTAL_API_KEY:
+        return {"ok": False, "error": "API non configurée"}
+    
+    url = f"{DF_URL.rstrip('/')}/api/client-portal/contracts"
+    body = {
+        "pack": pack,
+        "billing_cycle": billing_cycle,
+        "property_address": property_address,
+        "property_postal_code": property_postal_code,
+        "property_city": property_city,
+        "property_label": property_label,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                url,
+                params={"email": email},
+                json=body,
+                headers={"X-API-Key": DF_CLIENT_PORTAL_API_KEY}
+            )
+        if r.status_code in (200, 201):
+            data = r.json()
+            return {"ok": True, "contract": data.get("contract")}
+        elif r.status_code == 409:
+            data = r.json()
+            return {"ok": False, "error": data.get("detail", "Contrat déjà existant")}
+        elif r.status_code == 429:
+            data = r.json()
+            return {"ok": False, "error": data.get("detail", "Veuillez patienter")}
+        else:
+            log.warning("[df] create contract → %s : %s", r.status_code, r.text[:200])
+            return {"ok": False, "error": "Erreur serveur"}
+    except Exception as exc:
+        log.error("[df] create contract erreur : %s", exc)
+        return {"ok": False, "error": str(exc)}
