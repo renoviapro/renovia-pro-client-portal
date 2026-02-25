@@ -149,7 +149,7 @@ export default function Dashboard() {
                 {firstName ? firstName.charAt(0).toUpperCase() : "👋"}
               </div>
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-white">
+                <h1 className="text-2xl lg:text-3xl text-white" style={{ fontFamily: "'Black Ops One', cursive" }}>
                   {greeting}{firstName ? `, ${firstName}` : ""} !
                 </h1>
                 <p className="text-white/60 text-sm mt-0.5">Bienvenue dans votre espace client</p>
