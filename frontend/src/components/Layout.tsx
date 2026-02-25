@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { api } from "../lib/api";
 
-const API = (import.meta as unknown as { env: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? "";
-
 type User = { name?: string | null; email: string };
 
-const links = [
+type ClientContext = {
+  hasChantiers: boolean;
+  hasMaintenance: boolean;
+  hasDocuments: boolean;
+};
+
+const allLinks = [
   {
-    to: "/dashboard", label: "Tableau de bord",
+    to: "/dashboard", label: "Tableau de bord", always: true,
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" />
@@ -17,7 +21,7 @@ const links = [
     ),
   },
   {
-    to: "/chantiers", label: "Mes chantiers",
+    to: "/chantiers", label: "Mes chantiers", requiresChantiers: true,
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path d="M2 20h20M4 20V10l8-7 8 7v10" /><path d="M9 20v-6h6v6" />
@@ -25,7 +29,7 @@ const links = [
     ),
   },
   {
-    to: "/documents", label: "Documents",
+    to: "/documents", label: "Documents", always: true,
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14,2 14,8 20,8" />
@@ -34,7 +38,7 @@ const links = [
     ),
   },
   {
-    to: "/tickets", label: "Tickets SAV",
+    to: "/tickets", label: "Tickets SAV", requiresChantiers: true,
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -42,7 +46,7 @@ const links = [
     ),
   },
   {
-    to: "/maintenance", label: "Maintenance",
+    to: "/maintenance", label: "Maintenance", always: true,
     icon: (
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
@@ -56,10 +60,42 @@ export default function Layout() {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [clientContext, setClientContext] = useState<ClientContext>({
+    hasChantiers: false,
+    hasMaintenance: false,
+    hasDocuments: false,
+  });
+  const [contextLoaded, setContextLoaded] = useState(false);
 
   useEffect(() => {
     api<User>("/api/v1/me").then(setUser).catch(() => null);
+    
+    Promise.all([
+      api<{ documents: unknown[] }>("/api/v1/documents").catch(() => ({ documents: [] })),
+      api<{ contracts: unknown[] }>("/api/v1/maintenance/contracts").catch(() => ({ contracts: [] })),
+    ]).then(([docsRes, maintRes]) => {
+      const docs = docsRes.documents || [];
+      const contracts = maintRes.contracts || [];
+      const hasChantierDocs = docs.some((d: any) => d.source !== "maintenance");
+      
+      setClientContext({
+        hasChantiers: hasChantierDocs,
+        hasMaintenance: contracts.length > 0,
+        hasDocuments: docs.length > 0 || contracts.length > 0,
+      });
+      setContextLoaded(true);
+    });
   }, []);
+
+  const links = useMemo(() => {
+    if (!contextLoaded) return allLinks.filter(l => l.always);
+    
+    return allLinks.filter(l => {
+      if (l.always) return true;
+      if (l.requiresChantiers && !clientContext.hasChantiers) return false;
+      return true;
+    });
+  }, [clientContext, contextLoaded]);
 
   const logout = () => {
     localStorage.removeItem("access_token");
