@@ -117,9 +117,7 @@ export default function Layout() {
         {/* Logo */}
         <div className="p-6 pb-8">
           <a href="/dashboard" className="flex items-center gap-3 no-underline group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FEBD17] to-[#E6AA00] flex items-center justify-center shadow-lg shadow-[#FEBD17]/20">
-              <img src="/logo.png" alt="Renovia Pro" className="h-8 w-8 object-contain" />
-            </div>
+            <img src="/logo.png" alt="Renovia Pro" className="h-10 w-10 object-contain" />
             <div>
               <p className="text-white text-lg font-bold leading-tight tracking-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>RENOVIA</p>
               <p className="text-[#FEBD17] text-sm font-bold leading-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>PRO</p>
@@ -186,35 +184,33 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Header mobile */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-40 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-16 shadow-sm">
+      {/* Header mobile - noir */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 bg-black border-b border-white/10 flex items-center justify-between px-4 h-16">
         <a href="/dashboard" className="flex items-center gap-2 no-underline">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FEBD17] to-[#E6AA00] flex items-center justify-center">
-            <img src="/logo.png" alt="Renovia Pro" className="h-7 w-7 object-contain" />
-          </div>
-          <span className="text-gray-900 text-sm font-bold" style={{ fontFamily: "'Black Ops One', sans-serif" }}>
+          <img src="/logo.png" alt="Renovia Pro" className="h-9 w-9 object-contain" />
+          <span className="text-white text-sm font-bold" style={{ fontFamily: "'Black Ops One', sans-serif" }}>
             RENOVIA <span className="text-[#FEBD17]">PRO</span>
           </span>
         </a>
-        <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">
           {menuOpen
-            ? <svg width="22" height="22" fill="none" stroke="#374151" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-            : <svg width="22" height="22" fill="none" stroke="#374151" strokeWidth="2" viewBox="0 0 24 24"><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></svg>
+            ? <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            : <svg width="22" height="22" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24"><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></svg>
           }
         </button>
       </div>
 
       {/* Menu mobile overlay */}
       {menuOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm" onClick={() => setMenuOpen(false)}>
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/80" onClick={() => setMenuOpen(false)}>
           <div 
-            className="absolute top-16 inset-x-0 bg-white border-b border-gray-100 p-4 space-y-1 shadow-xl fade-in" 
+            className="absolute top-16 inset-x-0 bg-black border-b border-white/10 p-4 space-y-1" 
             onClick={e => e.stopPropagation()}
           >
             {user && (
-              <div className="px-3 py-3 mb-2 bg-gray-50 rounded-xl">
-                <p className="text-gray-400 text-xs">Connecté en tant que</p>
-                <p className="text-gray-900 font-medium text-sm truncate">{user.name || user.email}</p>
+              <div className="px-3 py-3 mb-2 bg-white/5 rounded-xl">
+                <p className="text-white/40 text-xs">Connecté en tant que</p>
+                <p className="text-white font-medium text-sm truncate">{user.name || user.email}</p>
               </div>
             )}
             {links.map(l => (
@@ -224,19 +220,19 @@ export default function Layout() {
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>
                   "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium no-underline transition-all " +
-                  (isActive ? "bg-[#FEBD17] text-black" : "text-gray-600 hover:bg-gray-50")
+                  (isActive ? "bg-[#FEBD17] text-black" : "text-white/70 hover:bg-white/5 hover:text-white")
                 }
               >
                 {l.icon}
                 {l.label}
               </NavLink>
             ))}
-            <div className="pt-2 mt-2 border-t border-gray-100">
+            <div className="pt-2 mt-2 border-t border-white/10">
               <a
                 href="https://depannage.renoviapro.fr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-red-500 no-underline hover:bg-red-50"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-red-400 no-underline hover:bg-red-500/10"
               >
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.6a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.6a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -245,7 +241,7 @@ export default function Layout() {
               </a>
               <button 
                 onClick={logout} 
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
               >
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
