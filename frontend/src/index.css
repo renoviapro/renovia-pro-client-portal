@@ -25,9 +25,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, .heading {
+h1, h2, h3, .heading, .font-blackops {
   font-family: "Black Ops One", cursive !important;
   letter-spacing: 0.02em;
+  font-weight: 400 !important;
+}
+
+.logo-text {
+  font-family: "Black Ops One", cursive !important;
   font-weight: 400 !important;
 }
 

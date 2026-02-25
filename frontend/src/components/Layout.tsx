@@ -119,8 +119,8 @@ export default function Layout() {
           <a href="/dashboard" className="flex items-center gap-3 no-underline group">
             <img src="/logo.png" alt="Renovia Pro" className="h-10 w-10 object-contain" />
             <div>
-              <p className="text-white text-lg font-bold leading-tight tracking-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>RENOVIA</p>
-              <p className="text-[#FEBD17] text-sm font-bold leading-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>PRO</p>
+              <p className="logo-text text-white text-lg leading-tight tracking-tight">RENOVIA</p>
+              <p className="logo-text text-[#FEBD17] text-sm leading-tight">PRO</p>
             </div>
           </a>
         </div>
@@ -188,7 +188,7 @@ export default function Layout() {
       <div className="lg:hidden fixed top-0 inset-x-0 z-40 bg-black border-b border-white/10 flex items-center justify-between px-4 h-16">
         <a href="/dashboard" className="flex items-center gap-2 no-underline">
           <img src="/logo.png" alt="Renovia Pro" className="h-9 w-9 object-contain" />
-          <span className="text-white text-sm font-bold" style={{ fontFamily: "'Black Ops One', sans-serif" }}>
+          <span className="logo-text text-white text-sm">
             RENOVIA <span className="text-[#FEBD17]">PRO</span>
           </span>
         </a>

@@ -38,7 +38,7 @@ export default function TicketNew() {
           </svg>
         </Link>
         <div>
-          <h2 className="text-xl font-bold text-white">Nouveau ticket SAV</h2>
+          <h2 className="text-xl text-white" style={{ fontFamily: "'Black Ops One', cursive" }}>Nouveau ticket SAV</h2>
           <p className="text-white/40 text-sm">Décrivez votre problème, nous vous répondons sous 24–48h ouvrées.</p>
         </div>
       </div>
