@@ -12,7 +12,7 @@
   --color-text-muted: #6B7280;
   --color-text-light: #9CA3AF;
   --color-border: #E5E5E0;
-  --color-sidebar: #111111;
+  --color-sidebar: #000000;
   --font-sans: "Inter", "Poppins", sans-serif;
   --font-heading: "Black Ops One", sans-serif;
   --font-sub: "Montserrat", sans-serif;
@@ -114,7 +114,7 @@ html { scroll-behavior: smooth; }
 .input-field::placeholder { color: var(--color-text-light); }
 
 .sidebar-dark {
-  background: linear-gradient(180deg, #111111 0%, #0A0A0A 100%);
+  background: #000000;
 }
 
 .fade-in {

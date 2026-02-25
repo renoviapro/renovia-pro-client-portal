@@ -147,7 +147,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex bg-[#FAFAF8]">
       {/* Colonne gauche décorative (desktop) */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center bg-black">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#FEBD17]/20 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-[#FEBD17]/10 rounded-full blur-3xl" />

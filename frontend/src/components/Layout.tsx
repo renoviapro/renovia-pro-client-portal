@@ -112,8 +112,8 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex bg-[#FAFAF8]">
-      {/* Sidebar desktop - style sombre premium */}
-      <aside className="hidden lg:flex w-72 flex-col sidebar-dark fixed inset-y-0 left-0 z-30">
+      {/* Sidebar desktop - noir pur */}
+      <aside className="hidden lg:flex w-72 flex-col bg-black fixed inset-y-0 left-0 z-30">
         {/* Logo */}
         <div className="p-6 pb-8">
           <a href="/dashboard" className="flex items-center gap-3 no-underline group">
