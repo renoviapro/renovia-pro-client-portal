@@ -171,13 +171,23 @@ export default function Documents() {
 
   const openPreview = async (doc: Doc) => {
     if (!doc.url) return;
+    
     const res = await fetch(doc.url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (!res.ok) { alert("Document introuvable."); return; }
-    const html = await res.text();
-    const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); }
+    
+    const contentType = res.headers.get("content-type") || "";
+    
+    if (contentType.includes("application/pdf")) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } else {
+      const html = await res.text();
+      const win = window.open("", "_blank");
+      if (win) { win.document.write(html); win.document.close(); }
+    }
   };
 
   // Filtrage et comptage
