@@ -69,6 +69,7 @@ export default function Maintenance() {
     property_city: "",
     property_label: "",
   });
+  const [tab, setTab] = useState<"active" | "archived">("active");
 
   useEffect(() => {
     loadContracts();
@@ -396,18 +397,67 @@ export default function Maintenance() {
         </div>
       )}
 
-      {!loading && activeContracts.length > 0 && (
-        <div className="space-y-4">
-          <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Contrats actifs</p>
-          {activeContracts.map(c => <ContractCard key={c.id} contract={c} />)}
-        </div>
-      )}
+      {!loading && contracts.length > 0 && (
+        <>
+          {/* Onglets */}
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setTab("active")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                tab === "active"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Actifs
+              {activeContracts.length > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${tab === "active" ? "bg-[#FEBD17] text-black" : "bg-gray-200 text-gray-600"}`}>
+                  {activeContracts.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setTab("archived")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-lg transition-all ${
+                tab === "archived"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Archivés
+              {archivedContracts.length > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${tab === "archived" ? "bg-gray-600 text-white" : "bg-gray-200 text-gray-600"}`}>
+                  {archivedContracts.length}
+                </span>
+              )}
+            </button>
+          </div>
 
-      {!loading && archivedContracts.length > 0 && (
-        <div className="space-y-4">
-          <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">Contrats archivés</p>
-          {archivedContracts.map(c => <ContractCard key={c.id} contract={c} />)}
-        </div>
+          {/* Liste selon onglet */}
+          {tab === "active" && (
+            <div className="space-y-4">
+              {activeContracts.length > 0 ? (
+                activeContracts.map(c => <ContractCard key={c.id} contract={c} />)
+              ) : (
+                <div className="card text-center py-12 px-6">
+                  <p className="text-gray-500 text-sm">Aucun contrat actif</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "archived" && (
+            <div className="space-y-4">
+              {archivedContracts.length > 0 ? (
+                archivedContracts.map(c => <ContractCard key={c.id} contract={c} />)
+              ) : (
+                <div className="card text-center py-12 px-6">
+                  <p className="text-gray-500 text-sm">Aucun contrat archivé</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {!loading && contracts.length === 0 && (
