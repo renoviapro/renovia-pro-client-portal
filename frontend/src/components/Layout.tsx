@@ -159,6 +159,20 @@ export default function Layout() {
         <div className="p-4 mt-auto">
           <div className="border-t border-white/5 pt-4">
             <a
+              href="https://devis.renoviapro.fr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#FEBD17]/10 to-transparent border border-[#FEBD17]/20 text-[#FEBD17] text-sm font-medium no-underline hover:border-[#FEBD17]/40 transition-all mb-2"
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14,2 14,8 20,8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+              Demander un devis
+            </a>
+            <a
               href="https://depannage.renoviapro.fr"
               target="_blank"
               rel="noopener noreferrer"
@@ -228,6 +242,20 @@ export default function Layout() {
               </NavLink>
             ))}
             <div className="pt-2 mt-2 border-t border-white/10">
+              <a
+                href="https://devis.renoviapro.fr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-[#FEBD17] no-underline hover:bg-[#FEBD17]/10"
+              >
+                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14,2 14,8 20,8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                Demander un devis
+              </a>
               <a
                 href="https://depannage.renoviapro.fr"
                 target="_blank"
