@@ -27,7 +27,7 @@ EMAIL_FOOTER = f"""
   <img src="{TEXT_URL}" alt="RENOVIA PRO" width="100" height="26" style="display:inline-block; border:0; vertical-align:middle;" />
   <br/>
   <span style="color:#666; font-size:11px; font-family:Arial,sans-serif;">
-    06 01 64 27 76 &nbsp;|&nbsp; contact@renoviapro.fr &nbsp;|&nbsp; renoviapro.fr
+    06 52 03 60 20 &nbsp;|&nbsp; contact@renoviapro.fr &nbsp;|&nbsp; renoviapro.fr
   </span>
 </div>
 """
