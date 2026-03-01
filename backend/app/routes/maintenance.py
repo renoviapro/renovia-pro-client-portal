@@ -42,7 +42,7 @@ class CreateContractRequest(BaseModel):
 @router.post("/maintenance/contracts")
 async def create_contract(payload: CreateContractRequest, user: dict = Depends(get_current_user)):
     """Crée un nouveau contrat pour un bien."""
-    if payload.pack not in ("tranquille", "tranquille_plus"):
+    if payload.pack not in ("tranquille", "tranquille_plus", "premium"):
         raise HTTPException(status_code=400, detail="Pack invalide")
     if payload.billing_cycle not in ("monthly", "annual"):
         raise HTTPException(status_code=400, detail="Cycle de facturation invalide")
@@ -156,7 +156,7 @@ class UpgradeRequest(BaseModel):
 @router.post("/maintenance/upgrade/{contract_id}")
 async def upgrade_contract(contract_id: str, payload: UpgradeRequest, user: dict = Depends(get_current_user)):
     """Demande de changement d'abonnement pour un contrat spécifique."""
-    if payload.new_pack not in ("tranquille", "tranquille_plus"):
+    if payload.new_pack not in ("tranquille", "tranquille_plus", "premium"):
         raise HTTPException(status_code=400, detail="Pack invalide")
 
     success = await request_contract_upgrade(contract_id, user["email"], payload.new_pack)
@@ -170,7 +170,7 @@ async def upgrade_contract(contract_id: str, payload: UpgradeRequest, user: dict
 @router.post("/maintenance/upgrade")
 async def upgrade_first_contract(payload: UpgradeRequest, user: dict = Depends(get_current_user)):
     """Rétrocompatibilité: change le premier contrat actif."""
-    if payload.new_pack not in ("tranquille", "tranquille_plus"):
+    if payload.new_pack not in ("tranquille", "tranquille_plus", "premium"):
         raise HTTPException(status_code=400, detail="Pack invalide")
 
     contract = await get_maintenance_contract_for_client(user["email"])

@@ -41,8 +41,9 @@ const INV_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 const PACKS = [
-  { id: "tranquille", label: "Tranquille", price: 19, priceAnnual: 205 },
-  { id: "tranquille_plus", label: "Tranquille+", price: 29, priceAnnual: 313 },
+  { id: "tranquille", label: "Renovia Essentiel", price: 19, priceAnnual: 205 },
+  { id: "tranquille_plus", label: "Renovia Confort", price: 45, priceAnnual: 486 },
+  { id: "premium", label: "Renovia Prestige", price: 69, priceAnnual: 745 },
 ];
 
 function fmt(d?: string) {
